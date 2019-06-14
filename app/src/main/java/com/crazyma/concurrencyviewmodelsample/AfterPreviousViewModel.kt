@@ -13,7 +13,7 @@ class AfterPreviousViewModel: CustomViewModel()  {
     fun runTest(delayTime: Int) {
 
         viewModelScope.launch(Dispatchers.IO) {
-            Log.i("badu", "run test with $delayTime seconds delayed}")
+            Log.i("badu", "[Queue] run test with $delayTime seconds delayed}")
             singleRunner.afterPrevious {
                 task(delayTime)
             }
@@ -23,7 +23,7 @@ class AfterPreviousViewModel: CustomViewModel()  {
 
     private suspend fun task(delayTime: Int) {
         delay(delayTime * 1000L)
-        Log.v("badu", "end delayed after $delayTime seconds}")
+        Log.v("badu", "[Queue] end delayed after $delayTime seconds}")
         result.postValue(delayTime)
     }
 }

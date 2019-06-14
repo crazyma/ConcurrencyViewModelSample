@@ -12,7 +12,7 @@ class JoinPreviousOrRunViewModel : CustomViewModel() {
     fun runTest(delayTime: Int) {
 
         viewModelScope.launch(Dispatchers.IO) {
-            Log.i("badu", "run test with $delayTime seconds delayed}")
+            Log.i("badu", "[Handler First] run test with $delayTime seconds delayed}")
             controlledRunner.joinPreviousOrRun {
                 task(delayTime)
             }
@@ -22,7 +22,7 @@ class JoinPreviousOrRunViewModel : CustomViewModel() {
 
     private suspend fun task(delayTime: Int) {
         delay(delayTime * 1000L)
-        Log.v("badu", "end delayed after $delayTime seconds}")
+        Log.v("badu", "[Handler First] end delayed after $delayTime seconds}")
         result.postValue(delayTime)
     }
 
