@@ -1,11 +1,9 @@
 package com.crazyma.concurrencyviewmodelsample
 
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
-class CancelPreviousViewModel: CustomViewModel()  {
+class JoinPreviousOrRunViewModel : CustomViewModel() {
 
     val result = SingleLiveEvent<Int>()
 
@@ -15,7 +13,7 @@ class CancelPreviousViewModel: CustomViewModel()  {
 
         viewModelScope.launch(Dispatchers.IO) {
             Log.i("badu", "run test with $delayTime seconds delayed}")
-            controlledRunner.cancelPreviousThenRun {
+            controlledRunner.joinPreviousOrRun {
                 task(delayTime)
             }
         }

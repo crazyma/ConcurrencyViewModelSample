@@ -18,7 +18,7 @@ open class CustomViewModel: ViewModel() {
      * Since we pass viewModelJob, you can cancel all coroutines
      * launched by uiScope by calling viewModelJob.cancel()
      */
-    private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
+    protected val viewModelScope = CoroutineScope(Dispatchers.Main + viewModelJob)
 
     /**
      * Cancel all coroutines when the ViewModel is cleared
