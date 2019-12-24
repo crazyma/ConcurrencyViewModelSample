@@ -1,9 +1,12 @@
 package com.crazyma.concurrencyviewmodelsample
 
+import android.util.Log
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class ConcurrencyHelper {
 
@@ -233,6 +236,51 @@ class ConcurrencyHelper {
                 // Kotlin ensures that the above loop always sets result exactly once, so we can return
                 // it here!
                 result
+            }
+        }
+
+        suspend fun customJoinPreviousOrRun(block: suspend () -> T): T {
+            activeTask.get()?.let {
+                return it.await()
+            }
+            return suspendCancellableCoroutine { cont ->
+                GlobalScope.launch {
+                    val newTask = async(start = CoroutineStart.LAZY) {
+                        block()
+                    }
+                    newTask.invokeOnCompletion {
+                        Log.d("badu", "invokeOnCompletion")
+                        activeTask.compareAndSet(newTask, null)
+                    }
+                    val task: Deferred<T>
+                    while (true) {
+                        if (!activeTask.compareAndSet(null, newTask)) {
+                            Log.i("badu", "loop tag 1")
+                            val currentTask = activeTask.get()
+                            if (currentTask != null) {
+                                Log.i("badu", "loop tag 2")
+                                newTask.cancel()
+                                task = currentTask
+                                break
+                            } else {
+                                Log.i("badu", "loop tag 3")
+                                yield()
+                            }
+                        } else {
+                            Log.i("badu", "loop tag 4")
+                            task = newTask
+                            break
+                        }
+                    }
+                    try {
+                        Log.i("badu", "111")
+                        cont.resume(task.await())
+                        Log.i("badu", "222")
+                    } catch (e: java.lang.Exception) {
+                        Log.i("badu", "333")
+                        cont.resumeWithException(e)
+                    }
+                }
             }
         }
     }
