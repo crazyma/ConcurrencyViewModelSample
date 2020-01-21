@@ -283,5 +283,54 @@ class ConcurrencyHelper {
                 }
             }
         }
+
+        suspend fun customJoinPreviousOrRun2(block: suspend () -> T): T {
+            activeTask.get()?.let {
+                return it.await()
+            }
+            return suspendCancellableCoroutine { cont ->
+                GlobalScope.launch {
+                    val newTask = async(start = CoroutineStart.LAZY) {
+                        block()
+                    }
+                    newTask.invokeOnCompletion {
+                        Log.d("badu", "invokeOnCompletion")
+                        activeTask.compareAndSet(newTask, null)
+                    }
+                    while (true) {
+                        if (!activeTask.compareAndSet(null, newTask)) {
+                            Log.i("badu", "loop tag 1")
+                            val currentTask = activeTask.get()
+                            if (currentTask != null) {
+                                Log.i("badu", "loop tag 2")
+                                newTask.cancel()
+                                try {
+                                    Log.d("badu", "AAA")
+                                    cont.resume(currentTask.await())
+                                } catch (e: Exception) {
+                                    Log.d("badu", "BBB")
+                                    cont.resumeWithException(e)
+                                }
+                                break
+                            } else {
+                                Log.i("badu", "loop tag 3")
+                                yield()
+                            }
+                        } else {
+                            Log.i("badu", "loop tag 4")
+                            try {
+                                Log.d("badu", "aaa")
+                                cont.resume(newTask.await())
+                            } catch (e: Exception) {
+                                Log.d("badu", "bbb")
+                                cont.resumeWithException(e)
+                            }
+                            break
+                        }
+                    }
+
+                }
+            }
+        }
     }
 }
